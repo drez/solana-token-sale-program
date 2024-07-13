@@ -15,13 +15,13 @@ import {
 } from "@solana/web3.js";
 import BN = require("bn.js");
 import { checkAccountInitialized, checkAccountDataIsValid, createAccountInfo, updateEnv } from "./utils";
+import { createTransferInstruction, createInitializeAccountInstruction, AccountLayout,  TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 import {
   TokenSaleAccountLayout,
   TokenSaleAccountLayoutInterface,
   ExpectedTokenSaleAccountLayoutInterface,
 } from "./account";
-import { AccountLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 type InstructionNumber = 0 | 1 | 2;
 
@@ -51,23 +51,23 @@ const transaction = async () => {
     newAccountPubkey: tempTokenAccountKeypair.publicKey,
     lamports: await connection.getMinimumBalanceForRentExemption(AccountLayout.span),
     space: AccountLayout.span,
-    programId: TOKEN_PROGRAM_ID,
+    programId: TOKEN_2022_PROGRAM_ID,
   });
 
-  const initTempTokenAccountIx = Token.createInitAccountInstruction(
-    TOKEN_PROGRAM_ID,
+  const initTempTokenAccountIx = createInitializeAccountInstruction(
+    sellerKeypair.publicKey,
     tokenMintAccountPubkey,
     tempTokenAccountKeypair.publicKey,
-    sellerKeypair.publicKey
+    TOKEN_2022_PROGRAM_ID
   );
 
-  const transferTokenToTempTokenAccountIx = Token.createTransferInstruction(
-    TOKEN_PROGRAM_ID,
+  const transferTokenToTempTokenAccountIx = createTransferInstruction(
+    sellerKeypair.publicKey,
     sellerTokenAccountPubkey,
     tempTokenAccountKeypair.publicKey,
-    sellerKeypair.publicKey,
+    amountOfTokenWantToSale,
     [],
-    amountOfTokenWantToSale
+    TOKEN_2022_PROGRAM_ID
   );
 
   const tokenSaleProgramAccountKeypair = new Keypair();
@@ -86,7 +86,7 @@ const transaction = async () => {
       createAccountInfo(tempTokenAccountKeypair.publicKey, false, true),
       createAccountInfo(tokenSaleProgramAccountKeypair.publicKey, false, true),
       createAccountInfo(SYSVAR_RENT_PUBKEY, false, false),
-      createAccountInfo(TOKEN_PROGRAM_ID, false, false),
+      createAccountInfo(TOKEN_2022_PROGRAM_ID, false, false),
     ],
     data: Buffer.from(
       Uint8Array.of(instruction, ...new BN(perTokenPrice).toArray("le", 8))

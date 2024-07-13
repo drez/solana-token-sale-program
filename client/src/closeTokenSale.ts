@@ -4,7 +4,7 @@ dotenv.config();
 
 import { Connection, PublicKey, Transaction, TransactionInstruction, Keypair, LAMPORTS_PER_SOL, clusterApiUrl } from "@solana/web3.js";
 import { createAccountInfo, checkAccountInitialized } from "./utils";
-import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import { getOrCreateAssociatedTokenAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { TokenSaleAccountLayoutInterface, TokenSaleAccountLayout } from "./account";
 
 type InstructionNumber = 0 | 1 | 2;
@@ -47,8 +47,8 @@ const transaction = async () => {
     swapSolAmount: decodedTokenSaleProgramAccountData.swapSolAmount,
     swapTokenAmount: decodedTokenSaleProgramAccountData.swapTokenAmount,
   };
-  const token = new Token(connection, tokenPubkey, TOKEN_PROGRAM_ID, buyerKeypair);
-  const buyerTokenAccount = await token.getOrCreateAssociatedAccountInfo(buyerKeypair.publicKey);
+
+  const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, buyerKeypair, tokenPubkey, buyerKeypair.publicKey, undefined, undefined, undefined, TOKEN_2022_PROGRAM_ID);
 
   const PDA = await PublicKey.findProgramAddress([Buffer.from("token_sale")], tokenSaleProgramId);
 
@@ -58,7 +58,7 @@ const transaction = async () => {
       createAccountInfo(sellerPubkey, true, true),
       createAccountInfo(sellerTokenAccountPubkey, false, true),
       createAccountInfo(tokenSaleProgramAccountData.tempTokenAccountPubkey, false, true),
-      createAccountInfo(TOKEN_PROGRAM_ID, false, false),
+      createAccountInfo(TOKEN_2022_PROGRAM_ID, false, false),
       createAccountInfo(PDA[0], false, false),
       createAccountInfo(tokenSaleProgramAccountPubkey, false, true),
     ],

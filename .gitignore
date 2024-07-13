@@ -14,3 +14,4 @@ docker-target
 .idea
 .coderrect
 build
+client/package-lock.json

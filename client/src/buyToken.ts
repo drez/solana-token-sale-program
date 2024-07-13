@@ -13,7 +13,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { createAccountInfo, checkAccountInitialized } from "./utils";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getOrCreateAssociatedTokenAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { TokenSaleAccountLayoutInterface, TokenSaleAccountLayout } from "./account";
 import BN = require("bn.js");
 
@@ -54,8 +54,7 @@ const transaction = async () => {
     swapTokenAmount: decodedTokenSaleProgramAccountData.swapTokenAmount,
   };
 
-  const token = new Token(connection, tokenPubkey, TOKEN_PROGRAM_ID, buyerKeypair);
-  const buyerTokenAccount = await token.getOrCreateAssociatedAccountInfo(buyerKeypair.publicKey);
+  const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, buyerKeypair, tokenPubkey, buyerKeypair.publicKey, undefined, undefined, undefined, TOKEN_2022_PROGRAM_ID);
 
   const PDA = await PublicKey.findProgramAddress([Buffer.from("token_sale")], tokenSaleProgramId);
 
@@ -68,7 +67,7 @@ const transaction = async () => {
       createAccountInfo(tokenSaleProgramAccountPubkey, false, false),
       createAccountInfo(SystemProgram.programId, false, false),
       createAccountInfo(buyerTokenAccount.address, false, true),
-      createAccountInfo(TOKEN_PROGRAM_ID, false, false),
+      createAccountInfo(TOKEN_2022_PROGRAM_ID, false, false),
       createAccountInfo(PDA[0], false, false),
     ],
     data: Buffer.from(Uint8Array.of(instruction, ...new BN(number_of_tokens).toArray("le",8))),
