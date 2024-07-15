@@ -1,3 +1,7 @@
+1. Update setup so far for the updated @solana/web3.js
+2. bit more verbose
+3. more to come...
+
 # Solana Token Sale Program
 
 Swap SPL tokens for SOL at a fixed price
@@ -13,11 +17,13 @@ Swap SPL tokens for SOL at a fixed price
 ### Build
 
 The normal cargo build is available for building programs against your host machine:
+
 ```
 $ cargo build
 ```
 
 To build a specific program, such as SPL Token, for the Solana BPF target:
+
 ```
 $ cd token/program
 $ cargo build-bpf
@@ -30,6 +36,7 @@ $ solana program deploy target/deploy/spl_tokensale_solana.so
 ```
 
 ### Set Environment Variables
+
 Before running RPC Client, Change .example-env to .env. And refer to the below and fill NEEDED section.
 
 ```
