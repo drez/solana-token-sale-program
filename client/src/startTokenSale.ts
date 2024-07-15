@@ -12,6 +12,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction,
+  SendTransactionError
 } from "@solana/web3.js";
 import BN = require("bn.js");
 import { checkAccountInitialized, checkAccountDataIsValid, createAccountInfo, updateEnv } from "./utils";
@@ -22,6 +23,7 @@ import {
   TokenSaleAccountLayoutInterface,
   ExpectedTokenSaleAccountLayoutInterface,
 } from "./account";
+import bs58 = require("bs58");
 
 type InstructionNumber = 0 | 1 | 2;
 
@@ -33,7 +35,8 @@ const transaction = async () => {
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
   const tokenSaleProgramId = new PublicKey(process.env.CUSTOM_PROGRAM_ID!);
   const sellerPubkey = new PublicKey(process.env.SELLER_PUBLIC_KEY!);
-  const sellerPrivateKey = Uint8Array.from(JSON.parse(process.env.SELLER_PRIVATE_KEY!));
+  const secretKey = bs58.decode(process.env.SELLER_PRIVATE_KEY!);
+  const sellerPrivateKey = Uint8Array.from(Buffer.from(secretKey));
   const sellerKeypair = new Keypair({
     publicKey: sellerPubkey.toBytes(),
     secretKey: sellerPrivateKey,
@@ -43,7 +46,8 @@ const transaction = async () => {
   console.log("sellerTokenAccountPubkey: ", sellerTokenAccountPubkey.toBase58());
   const instruction: InstructionNumber = 0;
   const amountOfTokenWantToSale = 1000;
-  const perTokenPrice = 0.1*LAMPORTS_PER_SOL;
+  const tokenPrice = parseFloat(process.env.TOKEN_SALE_PRICE!);
+  const perTokenPrice = tokenPrice*LAMPORTS_PER_SOL;
 
   const tempTokenAccountKeypair = new Keypair();
   const createTempTokenAccountIx = SystemProgram.createAccount({
@@ -102,11 +106,15 @@ const transaction = async () => {
     createTokenSaleProgramAccountIx,
     initTokenSaleProgramIx
   );
+  try {
+    await connection.sendTransaction(tx, [sellerKeypair, tempTokenAccountKeypair, tokenSaleProgramAccountKeypair], {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
+  } catch (e: any) { 
+    console.log(e.getLogs());
+  }
 
-  await connection.sendTransaction(tx, [sellerKeypair, tempTokenAccountKeypair, tokenSaleProgramAccountKeypair], {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
   //phase1 end
 
   //wait block update

@@ -18,7 +18,8 @@ const envItems = [
   "TOKEN_PUBKEY",
   "RPCURL",
   "API_URL",
-  "TOKEN_SALE_PRICE"
+  "TOKEN_SALE_PRICE",
+  "TOKEN_DECIMALS"
 ];
 
 export function updateEnv() {

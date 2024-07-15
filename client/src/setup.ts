@@ -37,7 +37,7 @@ const setup = async () => {
 
   console.log("2. Get/Set mint");
   let mintPub:PublicKey;
-  let mint:Mint;
+  let mint:Mint = <Mint>{};
 
   if (tokenPubKey === undefined) {
     console.log("Create Token Mint Account...\n");
@@ -45,19 +45,20 @@ const setup = async () => {
   } else {
     mint = await getMint(connection, new PublicKey(tokenPubKey), "confirmed", TOKEN_2022_PROGRAM_ID);
     mintPub = mint.address;
+    process.env.TOKEN_DECIMALS = mint.decimals.toString();
   }
 
   console.log("Get/Create Seller Token Account ( "+mintPub+" )... \n");
   const sellerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, sellerKeypair, mintPub, sellerKeypair.publicKey, undefined, undefined, undefined, TOKEN_2022_PROGRAM_ID);
 
   console.log("Mint 5000 Tokens to seller token account... ( " + sellerTokenAccount.address + " )\n");
-  await mintTo(connection, sellerKeypair, mintPub, sellerTokenAccount.address, authKeypair, 500000, undefined, undefined, TOKEN_2022_PROGRAM_ID);
+  await mintTo(connection, sellerKeypair, mintPub, sellerTokenAccount.address, authKeypair, 5000000000, undefined, undefined, TOKEN_2022_PROGRAM_ID);
 
   console.log("Minted, validating ...");
   const sellerTokenBal = await getAccount(connection, sellerTokenAccount.address, "confirmed", TOKEN_2022_PROGRAM_ID);
   const sellerTokenBalance: any = sellerTokenBal.amount.toString();
 
-  console.log(sellerTokenBalance);
+  console.log(sellerTokenBalance / mint.decimals);
   
   console.log("Requesting SOL for buyer...");
   //await connection.requestAirdrop(buyerPubkey, LAMPORTS_PER_SOL * 2);
