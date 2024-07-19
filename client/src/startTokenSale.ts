@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import {
+  sendAndConfirmTransaction,
   clusterApiUrl,
   Connection,
   Keypair,
@@ -16,7 +17,7 @@ import {
 } from "@solana/web3.js";
 import BN = require("bn.js");
 import { checkAccountInitialized, checkAccountDataIsValid, createAccountInfo, updateEnv } from "./utils";
-import { createTransferInstruction, createInitializeAccountInstruction, AccountLayout,  TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { createTransferInstruction, createInitializeAccountInstruction, AccountLayout,  TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 import {
   TokenSaleAccountLayout,
@@ -32,7 +33,7 @@ const transaction = async () => {
 
   //phase1 (setup Transaction & send Transaction)
   console.log("Setup Transaction");
-  const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+  const connection = new Connection(process.env.RPCURL!, "confirmed");
   const tokenSaleProgramId = new PublicKey(process.env.CUSTOM_PROGRAM_ID!);
   const sellerPubkey = new PublicKey(process.env.SELLER_PUBLIC_KEY!);
   const secretKey = bs58.decode(process.env.SELLER_PRIVATE_KEY!);
@@ -50,6 +51,7 @@ const transaction = async () => {
   const perTokenPrice = tokenPrice*LAMPORTS_PER_SOL;
 
   const tempTokenAccountKeypair = new Keypair();
+  console.log("tempTokenAccountKeypair: "+tempTokenAccountKeypair.publicKey);
   const createTempTokenAccountIx = SystemProgram.createAccount({
     fromPubkey: sellerKeypair.publicKey,
     newAccountPubkey: tempTokenAccountKeypair.publicKey,
@@ -58,23 +60,8 @@ const transaction = async () => {
     programId: TOKEN_2022_PROGRAM_ID,
   });
 
-  const initTempTokenAccountIx = createInitializeAccountInstruction(
-    sellerKeypair.publicKey,
-    tokenMintAccountPubkey,
-    tempTokenAccountKeypair.publicKey,
-    TOKEN_2022_PROGRAM_ID
-  );
-
-  const transferTokenToTempTokenAccountIx = createTransferInstruction(
-    sellerKeypair.publicKey,
-    sellerTokenAccountPubkey,
-    tempTokenAccountKeypair.publicKey,
-    amountOfTokenWantToSale,
-    [],
-    TOKEN_2022_PROGRAM_ID
-  );
-
   const tokenSaleProgramAccountKeypair = new Keypair();
+  console.log("tokenSaleProgramAccountKeypair: "+tokenSaleProgramAccountKeypair.publicKey);
   const createTokenSaleProgramAccountIx = SystemProgram.createAccount({
     fromPubkey: sellerKeypair.publicKey,
     newAccountPubkey: tokenSaleProgramAccountKeypair.publicKey,
@@ -82,6 +69,22 @@ const transaction = async () => {
     space: TokenSaleAccountLayout.span,
     programId: tokenSaleProgramId,
   });
+
+  const initTempTokenAccountIx = createInitializeAccountInstruction(
+    tempTokenAccountKeypair.publicKey,
+    tokenMintAccountPubkey,
+    sellerKeypair.publicKey,
+    TOKEN_2022_PROGRAM_ID
+  );
+
+  const transferTokenToTempTokenAccountIx = createTransferInstruction(
+    sellerTokenAccountPubkey,
+    tempTokenAccountKeypair.publicKey,
+    sellerKeypair.publicKey,
+    amountOfTokenWantToSale,
+    [],
+    TOKEN_2022_PROGRAM_ID
+  );
 
   const initTokenSaleProgramIx = new TransactionInstruction({
     programId: tokenSaleProgramId,
@@ -98,27 +101,25 @@ const transaction = async () => {
   });
 
   //make transaction with several instructions(ix)
-  console.log("Send transaction...\n");
-  const tx = new Transaction().add(
+ console.log("Send transaction 1...\n");
+  let tx = new Transaction().add(
     createTempTokenAccountIx,
     initTempTokenAccountIx,
     transferTokenToTempTokenAccountIx,
     createTokenSaleProgramAccountIx,
     initTokenSaleProgramIx
   );
-  try {
-    await connection.sendTransaction(tx, [sellerKeypair, tempTokenAccountKeypair, tokenSaleProgramAccountKeypair], {
-      skipPreflight: false,
-      preflightCommitment: "confirmed",
-    });
-  } catch (e: any) { 
-    console.log(e.getLogs());
-  }
+
+  await sendAndConfirmTransaction(connection, tx, [sellerKeypair, tempTokenAccountKeypair, tokenSaleProgramAccountKeypair], {
+    skipPreflight: false,
+    preflightCommitment: "confirmed",
+  }).catch(err => console.log(err));
 
   //phase1 end
+  console.log("Init: "+tokenSaleProgramAccountKeypair.publicKey);
 
   //wait block update
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 3000));
 
   //phase2 (check Transaction result is valid)
   const tokenSaleProgramAccount = await checkAccountInitialized(connection, tokenSaleProgramAccountKeypair.publicKey);
@@ -149,6 +150,7 @@ const transaction = async () => {
   process.env.TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY = tokenSaleProgramAccountKeypair.publicKey.toString();
   process.env.TEMP_TOKEN_ACCOUNT_PUBKEY = tempTokenAccountKeypair.publicKey.toString();
   updateEnv();
+  
 };
 
 transaction();

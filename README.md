@@ -1,43 +1,36 @@
-1. Update setup so far for the updated @solana/web3.js
-2. bit more verbose
-3. more to come...
-
 # Solana Token Sale Program
 
 Swap SPL tokens for SOL at a fixed price
 
-## Development
+- Updated client to the latest @solana/web3.js.
+- Updated program to the latest Cargo and spl-token-2022, with more verbosity.
+- Added help and tutorial to this README.
 
-### Environment Setup
+## Development Environment Setup
 
-1. Install the latest Rust stable from https://rustup.rs/
-2. Install Solana v1.6.1 or later from https://docs.solana.com/cli/install-solana-cli-tools
-3. Install the `libudev` development package for your distribution (`libudev-dev` on Debian-derived distros, `libudev-devel` on Redhat-derived).
+- Install the latest stable Rust from [rustup.rs](https://rustup.rs/).
+- Install Solana v1.6.1 or later from [Solana CLI Tools Installation Guide](https://docs.solana.com/cli/install-solana-cli-tools).
+- Install the libudev development package for your distribution (`libudev-dev` on Debian-derived distros, `libudev-devel` on Redhat-derived).
 
 ### Build
 
-The normal cargo build is available for building programs against your host machine:
-
-```
-$ cargo build
-```
-
 To build a specific program, such as SPL Token, for the Solana BPF target:
 
-```
+```bash
 $ cd token/program
 $ cargo build-bpf
 ```
 
 ### Deploy
 
-```
+```bash
 $ solana program deploy target/deploy/spl_tokensale_solana.so
 ```
 
 ### Set Environment Variables
 
-Before running RPC Client, Change .example-env to .env. And refer to the below and fill NEEDED section.
+Before running RPC Client, change `.example-env` to `.env` and fill in the `NEEDED` sections. See below for details:
+**See below for more info**
 
 ```
 CUSTOM_PROGRAM_ID=NEEDED
@@ -51,7 +44,9 @@ TEMP_TOKEN_ACCOUNT_PUBKEY=Dont'mind this
 TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY=Dont'mind this
 ```
 
-### Test
+### Test/run
+
+check
 
 ```bash
 $ cd client
@@ -63,4 +58,134 @@ $ npm run all
 
 Use this contract at your own risk. This program was not audited.
 
-Reference https://github.com/myungjunChae/solana_token_sale
+- Reference https://github.com/swaroopmaddu/solana-token-sale-program
+- Reference https://github.com/myungjunChae/solana_token_sale
+
+# Create a token with metadata in Solana CLI
+
+Ressources: https://solana.com/docs/core/tokens, https://spl.solana.com/token
+
+Install Solana CLI tool suite
+
+Ensure you have the private key of the owner secured.
+Use it to set the Solana CLI environment:
+
+```bash
+$ solana config set -k <YOUR-OWNER-KEY-JSON-FILE> -u devnet
+```
+
+Confirm your are using the right wallet, and have funds
+
+```bash
+$ solana address
+$ solana account <ACCOUNT-PUBKEY>
+```
+
+Airdrop funds if needed. The account will not actually exists on the network before it has funds:
+
+```bash
+$ solana airdrop 5 <YOUR-USER-PUB-KEY>
+```
+
+set `SELLER_PUBLIC_KEY` in .env
+
+**I choose to put all variable in base58 in the .ENV for consitency. Unfortunatly, Solana CLI doesnt have format option for the output of the private key. I use Phantom wallet, by restoring and exporting the private key to get the base58 format.**
+
+```bash
+$ solana config get
+$ cat <Keypair Path>
+make sure your wallet is on the right network (main, dev, test)
+create wallet in Phantom wallet via "Add/Connect Wallet" -> "Import Private Key"
+export the base58 private key via "Settings" -> "Manage Sccounts" -> Choose accoout ->  "Show private key"
+```
+
+Set `SELLER_PRIVATE_KEY` with the output of Phantom wallet (base58).
+
+Create the token with `spl-token-2022`. The 2022 program supports many features, but not all work together, and compatibility is unclear.
+`TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb` refers to the spl-token-2022 program.
+This is my setup:
+
+```bash
+$ spl-token create-token --program-id TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb --enable-metadata --decimals 0 --enable-freeze
+```
+
+Note your `<TOKEN_MINT_ADDRESS>` and set `TOKEN_PUBKEY` in .env.
+
+Initialise metadata:
+
+```bash
+$ spl-token initialize-metadata <TOKEN_MINT_ADDRESS> <TOKEN_NAME> <TOKEN_SYMBOL> <TOKEN_URI>
+```
+
+Create and save the token/seller account:
+
+```bash
+$ solana create-account <SELLER_ADDRESS>
+```
+
+Mint some token to the seller account:
+
+```bash
+$ spl-token mint <TOKEN_MINT_ADDRESS> 1000 <SELLER_ADDRESS>
+$ spl-token accounts --owner <SELLER-PUBKEY>
+```
+
+Transfer some token manually:
+
+```bash
+$ spl-token transfer <TOKEN_MINT_ADDRESS> <AMOUNT> <RECIPIENT_ADDRESS
+or RECIPIENT_TOKEN_ACCOUNT_ADDRESS> --fund-recipient
+```
+
+Freeze Mint:
+
+```bash
+$ spl-token authorize <TOKEN_MINT_ADDRESS> mint --disable
+```
+
+# Help
+
+Random observations to potentially save time.
+
+**Getting "Error: Deploying program failed: RPC response error -32002: Transaction simulation failed: Error processing Instruction 0: account data too small for instruction [3 log messages]" after a second deploy.**
+
+Extend the program account size:
+
+```bash
+$ solana program extend PROGRAM_ID <AMOUNT_OF_BYTES>
+```
+
+**Random RPC error ie. "RPC response error -32002: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1" OR unexpected error in web3js like "TokenAccountNotFoundError"**
+
+- Check the balance on the authority account, the account used to deploy the program.
+- Go get cofee and check again. Sometimes the RPC are misbehaving, sometimes the nodes takes a while to update...
+
+**Random error in web3js functions like "TokenAccountNotFoundError"**
+
+- Check the balance on the all accounts. Account needs funds to be initialized.
+- Go get cofee and check again. Sometimes the RPC are misbehaving, sometimes the nodes takes a while to update...
+
+**Force a program to have a new program ID**
+
+delete target/deploy/spl_tokensale_solana-keypair.json
+
+```bash
+$ solana-keygen new -o target/deploy/spl_tokensale_solana-keypair.json
+$ solana program deploy target/deploy/spl_tokensale_solana.so
+```
+
+Note the `Program Id` and add it to `CUSTOM_PROGRAM_ID` in the client `.env`.
+
+**Testnet and Devnet misbehaving**
+
+I have experienced some instability on those networks. To remedy, I switch sometimes from private nodes to public nodes. The private nodes tends to be stabl"er" than the public ones.
+
+- Using a local node
+
+If you already installed Solana CLI tool suite, just run:
+
+```bash
+$ solana-test-validator
+```
+
+This is very stable and fast! Problem is no wallet that I know of permit to use local node... Please correct me, that would be great!

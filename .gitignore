@@ -15,3 +15,5 @@ docker-target
 .coderrect
 build
 client/package-lock.json
+program/intermediate.json
+*.json

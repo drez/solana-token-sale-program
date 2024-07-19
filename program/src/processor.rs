@@ -10,7 +10,7 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 
-use spl_token::state::Account;
+use spl_token_2022::state::Account;
 
 use crate::{instruction::TokenSaleInstruction, state::TokenSaleProgramData};
 pub struct Processor;
@@ -23,13 +23,9 @@ impl Processor {
         let instruction = TokenSaleInstruction::unpack(instruction_data)?;
 
         match instruction {
-            TokenSaleInstruction::InitTokenSale { per_token_price, } => {
-                msg!("Instruction: init token sale program");
-                Self::init_token_sale_program(
-                    accounts,
-                    per_token_price,
-                    token_program_id,
-                )
+            TokenSaleInstruction::InitTokenSale { per_token_price } => {
+                msg!("Instruction: Init token sale program ");
+                Self::init_token_sale_program(accounts, per_token_price, token_program_id)
             }
             TokenSaleInstruction::BuyToken { number_of_tokens } => {
                 msg!("Instruction: buy token");
@@ -48,6 +44,7 @@ impl Processor {
     //token sale program account info - Save the data about token sale
     //rent - To check if the rent fee is exempted
     //token program - To change the owner of temp token account to token sale program
+
     //per_token_price - Fixed price per each SPL token in LAMPORTS.
 
     fn init_token_sale_program(
@@ -55,20 +52,23 @@ impl Processor {
         per_token_price: u64,
         token_sale_program_id: &Pubkey,
     ) -> ProgramResult {
+        //msg!("init_token_sale_program");
         let account_info_iter = &mut account_info_list.iter();
-
+        //msg!("seller_account_info");
         let seller_account_info = next_account_info(account_info_iter)?;
         if !seller_account_info.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
 
-        let temp_token_account_info = next_account_info(account_info_iter)?;
-        if *temp_token_account_info.owner != spl_token::id() {
+        //msg!("spl_token_2022: {}", spl_token_2022::id());
+        let temp_token_account_info: &AccountInfo = next_account_info(account_info_iter)?;
+        //msg!("temp_token_account_info: {}", temp_token_account_info.owner);
+        /*if *temp_token_account_info.owner != spl_token_2022::id() {
             return Err(ProgramError::IncorrectProgramId);
-        }
+        }*/
 
         let token_sale_program_account_info = next_account_info(account_info_iter)?;
-
+        msg!("rent_account_info");
         let rent_account_info = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(rent_account_info)?;
 
@@ -86,13 +86,14 @@ impl Processor {
         if token_sale_program_account_data.is_initialized {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
-
+        msg!("init");
         token_sale_program_account_data.init(
             true,
             *seller_account_info.key,
             *temp_token_account_info.key,
             per_token_price,
         );
+        msg!("TokenSaleProgramData");
 
         TokenSaleProgramData::pack(
             token_sale_program_account_data,
@@ -102,17 +103,19 @@ impl Processor {
         let (pda, _bump_seed) =
             Pubkey::find_program_address(&[b"token_sale"], token_sale_program_id);
 
+        msg!("next_account_info");
         let token_program = next_account_info(account_info_iter)?;
-        let set_authority_ix = spl_token::instruction::set_authority(
+        msg!("set_authority instruction {}", token_program.key);
+        let set_authority_ix = spl_token_2022::instruction::set_authority(
             token_program.key,
             temp_token_account_info.key,
             Some(&pda),
-            spl_token::instruction::AuthorityType::AccountOwner,
+            spl_token_2022::instruction::AuthorityType::AccountOwner,
             seller_account_info.key,
             &[&seller_account_info.key],
         )?;
 
-        msg!("chage tempToken's Authroity : seller -> token_program");
+        msg!("change tempToken's Authority : seller -> token_program");
         invoke(
             &set_authority_ix,
             &[
@@ -135,7 +138,11 @@ impl Processor {
     //pda - For signing when send the token from temp token account
     // number_of_tokens - Amount of tokens user want to buy
 
-    fn buy_token(accounts: &[AccountInfo], token_sale_program_id: &Pubkey, number_of_tokens:u64) -> ProgramResult {
+    fn buy_token(
+        accounts: &[AccountInfo],
+        token_sale_program_id: &Pubkey,
+        number_of_tokens: u64,
+    ) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let buyer_account_info = next_account_info(account_info_iter)?;
         if !buyer_account_info.is_signer {
@@ -158,13 +165,15 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        msg!("Transfer {} SOL : buy account -> seller account",token_sale_program_account_data.per_token_price * number_of_tokens);
+        msg!(
+            "Transfer {} SOL : buy account -> seller account",
+            token_sale_program_account_data.per_token_price * number_of_tokens
+        );
         let transfer_sol_to_seller = system_instruction::transfer(
             buyer_account_info.key,
             seller_account_info.key,
             token_sale_program_account_data.per_token_price * number_of_tokens,
         );
-        
 
         let system_program = next_account_info(account_info_iter)?;
         invoke(
@@ -182,7 +191,7 @@ impl Processor {
         let (pda, bump_seed) =
             Pubkey::find_program_address(&[b"token_sale"], token_sale_program_id);
 
-        let transfer_token_to_buyer_ix = spl_token::instruction::transfer(
+        let transfer_token_to_buyer_ix = spl_token_2022::instruction::transfer(
             token_program.key,
             temp_token_account_info.key,
             buyer_token_account_info.key,
@@ -207,7 +216,7 @@ impl Processor {
     }
 
     //seller_account_info
-    //seller_token_account_info - For receive remain token 
+    //seller_token_account_info - For receive remain token
     //temp_token_account_info - For retrieve remain token
     //token_program - For transfer the token
     //pda - For signing when send the token from temp token account and close temp token account
@@ -227,7 +236,7 @@ impl Processor {
         msg!("transfer Token : temp token account -> seller token account");
         let temp_token_account_info_data = Account::unpack(&temp_token_account_info.data.borrow())?;
 
-        let transfer_token_to_seller_ix = spl_token::instruction::transfer(
+        let transfer_token_to_seller_ix = spl_token_2022::instruction::transfer(
             token_program.key,
             temp_token_account_info.key,
             seller_token_account_info.key,
@@ -248,7 +257,7 @@ impl Processor {
         )?;
 
         msg!("close account : temp token account -> seller account");
-        let close_temp_token_account_ix = spl_token::instruction::close_account(
+        let close_temp_token_account_ix = spl_token_2022::instruction::close_account(
             token_program.key,
             temp_token_account_info.key,
             seller_account_info.key,
