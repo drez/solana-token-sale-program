@@ -4,13 +4,9 @@ use std::convert::TryInto;
 use crate::error::CustomError::InvalidInstruction;
 
 pub enum TokenSaleInstruction {
-    InitTokenSale {
-        per_token_price: u64,
-    },
-    BuyToken {
-        number_of_tokens: u64,
-    },
-    EndTokenSale {}
+    InitTokenSale { per_token_price: u64 },
+    BuyToken { number_of_tokens: u64 },
+    EndTokenSale {},
 }
 
 //function of enum

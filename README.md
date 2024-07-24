@@ -120,7 +120,7 @@ $ spl-token initialize-metadata <TOKEN_MINT_ADDRESS> <TOKEN_NAME> <TOKEN_SYMBOL>
 Create and save the token/seller account:
 
 ```bash
-$ solana create-account <SELLER_ADDRESS>
+$ spl-token create-account <TOKEN_MINT_ADDRESS>
 ```
 
 Mint some token to the seller account:
@@ -168,6 +168,10 @@ $ solana program extend PROGRAM_ID <AMOUNT_OF_BYTES>
 **Force a program to have a new program ID**
 
 delete target/deploy/spl_tokensale_solana-keypair.json
+
+**failed: invalid account data for instruction**
+
+Validate the accounts exists and that you are specifying the right `programId`, in this case `TOKEN_2022_PROGRAM_ID` ( `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb` )
 
 ```bash
 $ solana-keygen new -o target/deploy/spl_tokensale_solana-keypair.json

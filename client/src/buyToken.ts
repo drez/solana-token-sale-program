@@ -62,12 +62,6 @@ const transaction = async () => {
     .catch(e => console.log("error: "+e));
   const PDA = await PublicKey.findProgramAddressSync([Buffer.from("token_sale")], tokenSaleProgramId);
 
-  console.log("Accounts:");
-  console.log([
-    buyerKeypair.publicKey, tokenSaleProgramAccountData.sellerPubkey, tokenSaleProgramAccountData.tempTokenAccountPubkey,
-    tokenSaleProgramAccountPubkey, SystemProgram.programId, buyerTokenAccount, TOKEN_2022_PROGRAM_ID, buyerTokenAccount!.address
-  ]);
-
   const buyTokenIx = new TransactionInstruction({
     programId: tokenSaleProgramId,
     keys: [
