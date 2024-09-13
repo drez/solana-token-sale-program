@@ -53,7 +53,7 @@ TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY=
 
 ### Test/run
 
-check
+check package.json for more commands
 
 ```bash
 $ cd client
@@ -207,3 +207,7 @@ $ solana-test-validator
 ```
 
 This is very stable and fast! Problem is no wallet that I know of permit to use local node... Please correct me, that would be great!
+
+# TODO
+
+- switch `UpdateTokenPrice` to `UpdateTokenSale` and add `min_buy` update
