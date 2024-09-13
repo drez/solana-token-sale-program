@@ -29,19 +29,26 @@ $ solana program deploy target/deploy/spl_tokensale_solana.so
 
 ### Set Environment Variables
 
-Before running RPC Client, change `.example-env` to `.env` and fill in the `NEEDED` sections. See below for details:
+Before running RPC Client, change `.example-env` to `.env`. See below for details:
 **See below for more info**
 
 ```
-CUSTOM_PROGRAM_ID= When deploying, "Program Id:"
-SELLER_PUBLIC_KEY=NEEDED
-SELLER_PRIVATE_KEY=NEEDED
-BUYER_PUBLIC_KEY=NEEDED
-BUYER_PRIVATE_KEY=NEEDED
-TOKEN_PUBKEY= The result of `spl-token create-token`
-SELLER_TOKEN_ACCOUNT_PUBKEY= Will be generated
-TEMP_TOKEN_ACCOUNT_PUBKEY= Will be generated
-TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY= Will be generated
+CUSTOM_PROGRAM_ID= <Program id generated after running `cargo build-bpf`>
+SELLER_PUBLIC_KEY= <base58 format>
+SELLER_PRIVATE_KEY= <base58 format>
+BUYER_PUBLIC_KEY= <base58 format>
+BUYER_PRIVATE_KEY= <base58 format>
+TOKEN_PUBKEY= <base58 format>
+TOKEN_DECIMAL= <from your token creation>
+RPCURL=http://localhost:8899
+API_URL=http://localhost:3000
+TOKEN_SALE_PRICE= <token price, not in lamports>
+TOKEN_MIN_BUY= <minimum amount of token allowed to sell>
+
+# generated
+SELLER_TOKEN_ACCOUNT_PUBKEY=
+TEMP_TOKEN_ACCOUNT_PUBKEY=
+TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY=
 ```
 
 ### Test/run
@@ -144,6 +151,13 @@ $ spl-token authorize <TOKEN_MINT_ADDRESS> mint --disable
 ```
 
 # Help
+
+To be noted, when creating your token, most wallet will consider a token with 0 decimals as NFT and put them in a hidden area...
+
+Wanna start fresh?
+
+- Generate a new program_id: Delete program/target/deploy/spl_tokensale_solana-keypair.json, rebuild the program
+- CReate new PDA: Delete SELLER_TOKEN_ACCOUNT_PUBKEY, TEMP_TOKEN_ACCOUNT_PUBKEY, TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY from your env file. They will recreated.
 
 Random observations to potentially save time.
 
