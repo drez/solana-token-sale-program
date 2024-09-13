@@ -50,7 +50,7 @@ const transaction = async () => {
 
   console.log(" -sellerTokenAccountPubkey: ", sellerTokenAccountPubkey.toBase58());
   const instruction: InstructionNumber = 0;
-  const amountOfTokenForSale = 1000;
+  const amountOfTokenForSale = 100 * Math.pow(10, tokenDecimal);
   const tokenPrice = parseFloat(process.env.TOKEN_SALE_PRICE!);
   const min_buy = parseFloat(process.env.TOKEN_MIN_BUY!)|0 ;
   const perTokenPrice = tokenPrice*LAMPORTS_PER_SOL;
