@@ -84,8 +84,8 @@ const sellerPubkey = new PublicKey(process.env.SELLER_PUBLIC_KEY!);
 
   console.table([
     {
-      sellerTokenAccountBalance: sellerTokenAccountBalance.value.amount.toString(),
-      buyerTokenAccountBalance: buyerTokenAccountBalance.value.amount.toString(),
+      sellerTokenAccountBalance: sellerTokenAccountBalance.value.uiAmountString,
+      buyerTokenAccountBalance: buyerTokenAccountBalance.value.uiAmountString,
     },
   ]);
 

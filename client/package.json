@@ -9,6 +9,7 @@
     "setup": "npm run compile && node build/setup.js",
     "start": "npm run compile && node build/setup.js && node build/startTokenSale.js",
     "buy": "npm run compile && node build/buyToken.js",
+    "update": "npm run compile && node build/updatePrice.js",
     "close": "npm run compile && node build/closeTokenSale.js",
     "all": "npm run compile && node build/setup.js && node build/startTokenSale.js && node build/buyToken.js && node build/closeTokenSale.js"
   },

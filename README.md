@@ -17,7 +17,7 @@ Swap SPL tokens for SOL at a fixed price
 To build a specific program, such as SPL Token, for the Solana BPF target:
 
 ```bash
-$ cd token/program
+$ cd rogram
 $ cargo build-bpf
 ```
 
@@ -33,15 +33,15 @@ Before running RPC Client, change `.example-env` to `.env` and fill in the `NEED
 **See below for more info**
 
 ```
-CUSTOM_PROGRAM_ID=NEEDED
+CUSTOM_PROGRAM_ID= When deploying, "Program Id:"
 SELLER_PUBLIC_KEY=NEEDED
 SELLER_PRIVATE_KEY=NEEDED
 BUYER_PUBLIC_KEY=NEEDED
 BUYER_PRIVATE_KEY=NEEDED
-TOKEN_PUBKEY=Dont'mind this
-SELLER_TOKEN_ACCOUNT_PUBKEY=Dont'mind this
-TEMP_TOKEN_ACCOUNT_PUBKEY=Dont'mind this
-TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY=Dont'mind this
+TOKEN_PUBKEY= The result of `spl-token create-token`
+SELLER_TOKEN_ACCOUNT_PUBKEY= Will be generated
+TEMP_TOKEN_ACCOUNT_PUBKEY= Will be generated
+TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY= Will be generated
 ```
 
 ### Test/run
@@ -149,7 +149,7 @@ Random observations to potentially save time.
 
 **Getting "Error: Deploying program failed: RPC response error -32002: Transaction simulation failed: Error processing Instruction 0: account data too small for instruction [3 log messages]" after a second deploy.**
 
-Extend the program account size:
+Extend the program account size, 20000 for testing is a good value, be efficient in production!:
 
 ```bash
 $ solana program extend PROGRAM_ID <AMOUNT_OF_BYTES>

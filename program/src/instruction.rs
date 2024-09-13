@@ -4,8 +4,9 @@ use std::convert::TryInto;
 use crate::error::CustomError::InvalidInstruction;
 
 pub enum TokenSaleInstruction {
-    InitTokenSale { per_token_price: u64 },
+    InitTokenSale { per_token_price: u64, min_buy: u64 },
     BuyToken { number_of_tokens: u64 },
+    UpdateTokenPrice { new_per_token_price: u64 },
     EndTokenSale {},
 }
 
@@ -19,11 +20,15 @@ impl TokenSaleInstruction {
         return match tag {
             0 => Ok(Self::InitTokenSale {
                 per_token_price: Self::unpack_byte(rest, 0)?,
+                min_buy: Self::unpack_byte(rest, 1)?,
             }),
             1 => Ok(Self::BuyToken {
                 number_of_tokens: Self::unpack_byte(rest, 0)?,
             }),
             2 => Ok(Self::EndTokenSale {}),
+            3 => Ok(Self::UpdateTokenPrice {
+                new_per_token_price: Self::unpack_byte(rest, 0)?,
+            }),
             _ => Err(InvalidInstruction.into()),
         };
     }

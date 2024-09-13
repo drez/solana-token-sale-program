@@ -14,12 +14,12 @@ import {
   sendAndConfirmTransaction
 } from "@solana/web3.js";
 import { createAccountInfo, checkAccountInitialized } from "./utils";
-import { getOrCreateAssociatedTokenAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { getOrCreateAssociatedTokenAccount, TOKEN_2022_PROGRAM_ID, Account } from "@solana/spl-token";
 import { TokenSaleAccountLayoutInterface, TokenSaleAccountLayout } from "./account";
 import BN = require("bn.js");
 import bs58 = require("bs58");
 
-type InstructionNumber = 0 | 1 | 2;
+type InstructionNumber = 0 | 1 | 2 | 3;
 
 const transaction = async () => {
   console.log("3. Buy Tokens");
@@ -36,7 +36,7 @@ const transaction = async () => {
     secretKey: buyerPrivateKey,
   });
 
-  const number_of_tokens = 100;
+  const number_of_tokens = 10;
 
   const tokenPubkey = new PublicKey(process.env.TOKEN_PUBKEY!);
   const tokenSaleProgramAccountPubkey = new PublicKey(process.env.TOKEN_SALE_PROGRAM_ACCOUNT_PUBKEY!);
@@ -49,6 +49,7 @@ const transaction = async () => {
   const decodedTokenSaleProgramAccountData = TokenSaleAccountLayout.decode(
     encodedTokenSaleProgramAccountData
   ) as TokenSaleAccountLayoutInterface;
+
   const tokenSaleProgramAccountData = {
     isInitialized: decodedTokenSaleProgramAccountData.isInitialized,
     sellerPubkey: new PublicKey(decodedTokenSaleProgramAccountData.sellerPubkey),
@@ -58,9 +59,14 @@ const transaction = async () => {
   };
 
   console.log("getOrCreateAssociatedTokenAccount");
-  const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, buyerKeypair, tokenPubkey, buyerKeypair.publicKey, undefined, undefined, undefined, TOKEN_2022_PROGRAM_ID)
+  let buyerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, buyerKeypair, tokenPubkey, buyerKeypair.publicKey, undefined, undefined, undefined, TOKEN_2022_PROGRAM_ID)
     .catch(e => console.log("error: "+e));
   const PDA = await PublicKey.findProgramAddressSync([Buffer.from("token_sale")], tokenSaleProgramId);
+
+  buyerTokenAccount = buyerTokenAccount as Account
+
+  console.log("Send to buyer: "+ buyerTokenAccount.address)
+  console.log("Token Pubkey: "+ tokenPubkey)
 
   const buyTokenIx = new TransactionInstruction({
     programId: tokenSaleProgramId,
@@ -70,16 +76,20 @@ const transaction = async () => {
       createAccountInfo(tokenSaleProgramAccountData.tempTokenAccountPubkey, false, true),
       createAccountInfo(tokenSaleProgramAccountPubkey, false, false),
       createAccountInfo(SystemProgram.programId, false, false),
-      createAccountInfo(buyerTokenAccount!.address, false, true),
+      createAccountInfo(new PublicKey(buyerTokenAccount.address), false, true),
       createAccountInfo(TOKEN_2022_PROGRAM_ID, false, false),
+      createAccountInfo(tokenPubkey, false, false),
       createAccountInfo(PDA[0], false, false),
     ],
     data: Buffer.from(Uint8Array.of(instruction, ...new BN(number_of_tokens).toArray("le",8))),
   });
 
+  console.log(Uint8Array.of(instruction, ...new BN(number_of_tokens).toArray("le",8)));
+
   const tx = new Transaction().add(buyTokenIx);
 
   console.log("sendAndConfirmTransaction");
+  console.log("");
   await sendAndConfirmTransaction(connection, tx, [buyerKeypair], {
     skipPreflight: false,
     preflightCommitment: "confirmed",
@@ -96,9 +106,9 @@ const transaction = async () => {
 
   console.table([
     {
-      sellerTokenAccountBalance: sellerTokenAccountBalance.value.amount.toString(),
-      tempTokenAccountBalance: tempTokenAccountBalance.value.amount.toString(),
-      buyerTokenAccountBalance: buyerTokenAccountBalance.value.amount.toString(),
+      sellerTokenAccountBalance: sellerTokenAccountBalance.value.uiAmountString,
+      tempTokenAccountBalance: tempTokenAccountBalance.value.uiAmountString,
+      buyerTokenAccountBalance: buyerTokenAccountBalance.value.uiAmountString,
     },
   ]);
 

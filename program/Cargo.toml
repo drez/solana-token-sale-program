@@ -17,6 +17,7 @@ solana-frozen-abi = "2.0.2"
 zeroize = "=1.3.0"
 getrandom = { version = "0.1.14", features = ["dummy"] }
 borsh = "1.5.1"
+spl-associated-token-account = { version="=1.0.5", features = [ "no-entrypoint" ] }
 
 [lib]
 crate-type = ["cdylib", "lib"]
