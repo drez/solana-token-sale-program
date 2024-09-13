@@ -279,15 +279,16 @@ impl Processor {
             buyer_token_account_info.key
         );
 
-        let transfer_token_to_buyer_ix = spl_token_2022::instruction::transfer(
+        let transfer_token_to_buyer_ix = spl_token_2022::instruction::transfer_checked(
             token_program.key,
             temp_token_account_info.key,
+            token_mint_address.key,
             buyer_token_account_info.key,
             &pda,
             &[&pda],
             number_of_tokens * 10u64.pow(decimals as u32),
+            decimals,
         )?;
-        //number_of_tokens * 10u64.pow(decimals as u32),
 
         let pda = next_account_info(account_info_iter)?;
         msg!("pda {:?}", pda);
@@ -295,6 +296,7 @@ impl Processor {
             &transfer_token_to_buyer_ix,
             &[
                 temp_token_account_info.clone(),
+                token_mint_address.clone(),
                 buyer_token_account_info.clone(),
                 pda.clone(),
                 token_program.clone(),
