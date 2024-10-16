@@ -68,6 +68,18 @@ const transaction = async () => {
   console.log("Send to buyer: "+ buyerTokenAccount.address)
   console.log("Token Pubkey: "+ tokenPubkey)
 
+  console.log({
+    tokenSaleProgramId: tokenSaleProgramId,
+      tokenSaleProgramAccountPubkey: tokenSaleProgramAccountPubkey,
+      buyerPubKey: buyerKeypair.publicKey,
+      sellerKeypair: tokenSaleProgramAccountData.sellerPubkey,
+      tempTokenAccountPubkey: tokenSaleProgramAccountData.tempTokenAccountPubkey,
+      programId: SystemProgram.programId,
+      toTokenAccount: buyerTokenAccount.address,
+      TOKEN_2022_PROGRAM_ID: TOKEN_2022_PROGRAM_ID,
+      tokenPubKey: tokenPubkey,
+      PDA: PDA[0],
+    });
   const buyTokenIx = new TransactionInstruction({
     programId: tokenSaleProgramId,
     keys: [

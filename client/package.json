@@ -7,6 +7,7 @@
     "compile": "tsc -p ./tsconfig.json",
     "setup-validator": "solana-test-validator -r --bpf-program 79qNzt6mJ9iifKBB4WK5MaCJDJwnU6DWCvX7E8ScD6M9",
     "setup": "npm run compile && node build/setup.js",
+    "fund": "npm run compile && node build/addToPool.js",
     "start": "npm run compile && node build/setup.js && node build/startTokenSale.js",
     "buy": "npm run compile && node build/buyToken.js",
     "update": "npm run compile && node build/updatePrice.js",
